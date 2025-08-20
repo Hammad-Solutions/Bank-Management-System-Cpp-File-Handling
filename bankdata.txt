@@ -1,0 +1,2 @@
+100001|Muhammad Hammad|12344-4563433-5|1234|70000|Account created with balance 0;Deposit 100000 | Balance: 100000;Withdraw 10000 | Balance: 90000;Transfer to 100002 (Muhammad Hamza) 20000 | Balance: 70000;
+100002|Muhammad Hamza|12432-6578688-3|4321|19000|Account created with balance 0;Transfer from 100001 (Muhammad Hammad) 20000 | Balance: 20000;Withdraw 1000 | Balance: 19000;

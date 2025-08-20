@@ -1,251 +1,216 @@
+/*
+   Code Written by: Muhammad Hammad
+   Project: Simple Bank Management System
+   Features:
+   - Create Account (with CNIC check to prevent duplicates)
+   - Deposit, Withdraw, Transfer
+   - Transaction History
+   - Save/Load from File
+*/
+
 #include <iostream>
 #include <fstream>
 #include <string>
-#include <cmath>
 using namespace std;
 
-// ====================== Utility Functions ======================
-void saveAdmin() {
-    ofstream fout("admin.txt");
-    fout << "admin admin\n"; // default admin: username=admin, password=admin
-    fout.close();
+struct Account {
+    int accNo;
+    string name;
+    string cnic;
+    string pin;
+    double balance;
+    string history;
+};
+
+Account accounts[100];
+int accountCount = 0;
+int nextAccNo = 100001;
+
+void saveData() {
+    ofstream file("bankdata.txt");
+    for (int i = 0; i < accountCount; i++) {
+        file << accounts[i].accNo << "|"
+             << accounts[i].name << "|"
+             << accounts[i].cnic << "|"
+             << accounts[i].pin << "|"
+             << accounts[i].balance << "|"
+             << accounts[i].history << endl;
+    }
+    file.close();
 }
 
-bool checkAdminLogin(string u, string p) {
-    ifstream fin("admin.txt");
-    string user, pass;
-    while (fin >> user >> pass) {
-        if (user == u && pass == p) {
-            fin.close();
-            return true;
-        }
+void loadData() {
+    ifstream file("bankdata.txt");
+    if (!file) return;
+    accountCount = 0;
+    string line;
+    while (getline(file, line)) {
+        if (line.empty()) continue;
+        Account acc;
+        size_t p1 = line.find("|");
+        size_t p2 = line.find("|", p1 + 1);
+        size_t p3 = line.find("|", p2 + 1);
+        size_t p4 = line.find("|", p3 + 1);
+        size_t p5 = line.find("|", p4 + 1);
+
+        acc.accNo = stoi(line.substr(0, p1));
+        acc.name = line.substr(p1 + 1, p2 - p1 - 1);
+        acc.cnic = line.substr(p2 + 1, p3 - p2 - 1);
+        acc.pin = line.substr(p3 + 1, p4 - p3 - 1);
+        acc.balance = stod(line.substr(p4 + 1, p5 - p4 - 1));
+        acc.history = line.substr(p5 + 1);
+
+        accounts[accountCount++] = acc;
+        if (acc.accNo >= nextAccNo) nextAccNo = acc.accNo + 1;
     }
-    fin.close();
+    file.close();
+}
+
+bool cnicExists(const string &cnic) {
+    for (int i = 0; i < accountCount; i++) {
+        if (accounts[i].cnic == cnic) return true;
+    }
     return false;
 }
 
-bool checkTeacherLogin(string u, string p, string &tname) {
-    ifstream fin("teachers.txt");
-    string user, pass, name;
-    while (fin >> user >> pass) {
-        getline(fin, name); // read full name
-        if (user == u && pass == p) {
-            tname = name;
-            fin.close();
-            return true;
-        }
-    }
-    fin.close();
-    return false;
-}
-
-bool checkStudentLogin(string sid, string sname) {
-    ifstream fin("students.txt");
-    string id, name;
-    while (fin >> id) {
-        getline(fin, name);
-        if (id == sid && name == " " + sname) {
-            fin.close();
-            return true;
-        }
-    }
-    fin.close();
-    return false;
-}
-
-// ====================== Admin Functions ======================
-void addTeacher() {
-    string u, p, n;
-    cout << "Enter Teacher Username: ";
-    cin >> u;
-    cout << "Enter Password: ";
-    cin >> p;
+void createAccount() {
+    Account acc;
+    acc.accNo = nextAccNo++;
+    cout << "Full Name: ";
     cin.ignore();
-    cout << "Enter Full Name: ";
-    getline(cin, n);
+    getline(cin, acc.name);
 
-    ofstream fout("teachers.txt", ios::app);
-    fout << u << " " << p << " " << n << endl;
-    fout.close();
+    cout << "CNIC (xxxxx-xxxxxxx-x): ";
+    getline(cin, acc.cnic);
 
-    cout << "Teacher Added!\n";
-}
-
-void listTeachers() {
-    ifstream fin("teachers.txt");
-    string u, p, n;
-    cout << "--- Teachers ---\n";
-    while (fin >> u >> p) {
-        getline(fin, n);
-        cout << "Username: " << u << " | Name: " << n << endl;
-    }
-    fin.close();
-}
-
-// ====================== Teacher Functions ======================
-void addStudent() {
-    string id, name;
-    cout << "Enter Student ID: ";
-    cin >> id;
-    cin.ignore();
-    cout << "Enter Student Name: ";
-    getline(cin, name);
-
-    ofstream fout("students.txt", ios::app);
-    fout << id << " " << name << endl;
-    fout.close();
-    cout << "Student Added!\n";
-}
-
-void listStudents() {
-    ifstream fin("students.txt");
-    string id, name;
-    cout << "--- Students ---\n";
-    while (fin >> id) {
-        getline(fin, name);
-        cout << "ID: " << id << " | Name:" << name << endl;
-    }
-    fin.close();
-}
-
-void removeStudent() {
-    string id;
-    cout << "Enter Student ID to remove: ";
-    cin >> id;
-
-    ifstream fin("students.txt");
-    ofstream temp("temp.txt");
-
-    string sid, name;
-    bool found = false;
-    while (fin >> sid) {
-        getline(fin, name);
-        if (sid != id) {
-            temp << sid << name << endl;
-        } else {
-            found = true;
-        }
-    }
-    fin.close();
-    temp.close();
-    remove("students.txt");
-    rename("temp.txt", "students.txt");
-
-    if (found) cout << "Student removed!\n";
-    else cout << "Student not found.\n";
-}
-
-void markAttendance() {
-    string date, id;
-    int present;
-    cout << "Enter Date (e.g. 2025-08-17): ";
-    cin >> date;
-
-    ifstream fin("students.txt");
-    ofstream fout("attendance.txt", ios::app);
-
-    string sid, name;
-    while (fin >> sid) {
-        getline(fin, name);
-        cout << "Mark attendance for " << sid << name << " (1=Present,0=Absent): ";
-        cin >> present;
-        fout << date << " " << sid << " " << present << endl;
+    if (cnicExists(acc.cnic)) {
+        cout << "Account already exists with this CNIC!" << endl;
+        return;
     }
 
-    fin.close();
-    fout.close();
-    cout << "Attendance marked!\n";
+    cout << "Set 4-digit PIN: ";
+    cin >> acc.pin;
+
+    acc.balance = 0;
+    acc.history = "Account created with balance 0;";
+    accounts[accountCount++] = acc;
+    cout << "Account created! Your Account No is: " << acc.accNo << endl;
 }
 
-void attendancePercentage(string sid) {
-    ifstream fin("attendance.txt");
-    string date, id;
-    int mark;
-    int total = 0, present = 0;
-
-    while (fin >> date >> id >> mark) {
-        if (id == sid) {
-            total++;
-            if (mark == 1) present++;
-        }
+int findAccount(int accNo) {
+    for (int i = 0; i < accountCount; i++) {
+        if (accounts[i].accNo == accNo) return i;
     }
-    fin.close();
-
-    if (total == 0) cout << "No attendance record found.\n";
-    else cout << "Attendance % = " << (present * 100.0 / total) << "%\n";
+    return -1;
 }
 
-// ====================== Menus ======================
-void adminMenu() {
-    int ch;
-    do {
-        cout << "\n--- Admin Menu ---\n1. Add Teacher\n2. List Teachers\n0. Logout\nChoice: ";
-        cin >> ch;
-        if (ch == 1) addTeacher();
-        else if (ch == 2) listTeachers();
-    } while (ch != 0);
+void deposit(Account &acc) {
+    double amt;
+    cout << "Enter amount to deposit: ";
+    cin >> amt;
+    if (amt <= 0) return;
+    acc.balance += amt;
+    acc.history += "Deposit " + to_string((int)amt) + " | Balance: " + to_string((int)acc.balance) + ";";
+    cout << "Deposited successfully! New Balance: " << acc.balance << endl;
 }
 
-void teacherMenu(string tname) {
-    int ch;
-    do {
-        cout << "\n--- Teacher Menu (" << tname << ") ---\n1. Add Student\n2. List Students\n3. Remove Student\n4. Mark Attendance\n5. Attendance % of Student\n0. Logout\nChoice: ";
-        cin >> ch;
-        if (ch == 1) addStudent();
-        else if (ch == 2) listStudents();
-        else if (ch == 3) removeStudent();
-        else if (ch == 4) markAttendance();
-        else if (ch == 5) {
-            string sid;
-            cout << "Enter Student ID: ";
-            cin >> sid;
-            attendancePercentage(sid);
-        }
-    } while (ch != 0);
+void withdraw(Account &acc) {
+    double amt;
+    cout << "Enter amount to withdraw: ";
+    cin >> amt;
+    if (amt > 0 && amt <= acc.balance) {
+        acc.balance -= amt;
+        acc.history += "Withdraw " + to_string((int)amt) + " | Balance: " + to_string((int)acc.balance) + ";";
+        cout << "Withdrawn successfully! New Balance: " << acc.balance << endl;
+    } else {
+        cout << "Invalid amount!" << endl;
+    }
 }
 
-void studentMenu(string sid, string sname) {
-    int ch;
-    do {
-        cout << "\n--- Student Menu (" << sname << ") ---\n1. View Attendance %\n0. Logout\nChoice: ";
-        cin >> ch;
-        if (ch == 1) attendancePercentage(sid);
-    } while (ch != 0);
+void transfer(Account &acc) {
+    int toAccNo;
+    cout << "Enter account number to transfer: ";
+    cin >> toAccNo;
+    int idx = findAccount(toAccNo);
+    if (idx == -1 || toAccNo == acc.accNo) {
+        cout << "Invalid account number!" << endl;
+        return;
+    }
+    cout << "Receiver: " << accounts[idx].name << endl;
+    cout << "Do you confirm transfer? (y/n): ";
+    char c;
+    cin >> c;
+    if (c != 'y' && c != 'Y') {
+        cout << "Transaction cancelled." << endl;
+        return;
+    }
+    double amt;
+    cout << "Enter amount: ";
+    cin >> amt;
+    if (amt > 0 && amt <= acc.balance) {
+        acc.balance -= amt;
+        accounts[idx].balance += amt;
+        acc.history += "Transfer to " + to_string(toAccNo) + " (" + accounts[idx].name + ") " + to_string((int)amt) + " | Balance: " + to_string((int)acc.balance) + ";";
+        accounts[idx].history += "Transfer from " + to_string(acc.accNo) + " (" + acc.name + ") " + to_string((int)amt) + " | Balance: " + to_string((int)accounts[idx].balance) + ";";
+        cout << "Transferred successfully!" << endl;
+    } else {
+        cout << "Invalid amount!" << endl;
+    }
 }
 
-// ====================== Main ======================
-int main() {
-    saveAdmin(); // ensure admin account exists
+void showHistory(Account &acc) {
+    cout << "--- Transaction History ---" << endl;
+    string temp = acc.history;
+    size_t pos = 0;
+    while ((pos = temp.find(";")) != string::npos) {
+        cout << temp.substr(0, pos) << endl;
+        temp.erase(0, pos + 1);
+    }
+}
+
+void accountMenu(Account &acc) {
     int choice;
-
     do {
-        cout << "\n--- Student Management System ---\n1. Admin Login\n2. Teacher Login\n3. Student Login\n0. Exit\nChoice: ";
+        cout << "\n--- Account Menu (" << acc.name << ") ---\n";
+        cout << "1. Deposit\n2. Withdraw\n3. Transfer\n4. History\n0. Logout\nSelect: ";
         cin >> choice;
-
-        if (choice == 1) {
-            string u, p;
-            cout << "Enter Admin Username: "; cin >> u;
-            cout << "Enter Password: "; cin >> p;
-            if (checkAdminLogin(u, p)) adminMenu();
-            else cout << "Invalid Admin Login!\n";
+        switch (choice) {
+            case 1: deposit(acc); break;
+            case 2: withdraw(acc); break;
+            case 3: transfer(acc); break;
+            case 4: showHistory(acc); break;
         }
-        else if (choice == 2) {
-            string u, p, tname;
-            cout << "Enter Teacher Username: "; cin >> u;
-            cout << "Enter Password: "; cin >> p;
-            if (checkTeacherLogin(u, p, tname)) teacherMenu(tname);
-            else cout << "Invalid Teacher Login!\n";
-        }
-        else if (choice == 3) {
-            string sid, sname;
-            cout << "Enter Student ID: "; cin >> sid;
-            cin.ignore();
-            cout << "Enter Student Name: "; getline(cin, sname);
-            if (checkStudentLogin(sid, sname)) studentMenu(sid, sname);
-            else cout << "Invalid Student Login!\n";
-        }
-
     } while (choice != 0);
+    saveData();
+}
 
+void login() {
+    int accNo;
+    string pin;
+    cout << "Account No: ";
+    cin >> accNo;
+    cout << "PIN: ";
+    cin >> pin;
+    int idx = findAccount(accNo);
+    if (idx != -1 && accounts[idx].pin == pin) {
+        accountMenu(accounts[idx]);
+    } else {
+        cout << "Invalid login!" << endl;
+    }
+}
+
+int main() {
+    loadData();
+    int choice;
+    do {
+        cout << "\n======= BANK SYSTEM =======\n";
+        cout << "1. Create Account\n2. Login\n0. Exit\nSelect: ";
+        cin >> choice;
+        switch (choice) {
+            case 1: createAccount(); break;
+            case 2: login(); break;
+        }
+    } while (choice != 0);
+    saveData();
     return 0;
 }
