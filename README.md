@@ -47,7 +47,11 @@ It is a **beginner-friendly project**, perfect for **first semester students** w
 ---
 
 ## 🎥 Demo Video
-[▶ Watch Demo](assets/videos/demo.mp4)  
+[▶ Watch Demo](assets/videos/demo.mp4) 
+## **OR**
+Check out the live demo of this project on **LinkedIn**:  
+[▶ Watch Demo Video](https://www.linkedin.com/posts/hammad-solution_cplusplus-bankmanagementsystem-codingprojects-activity-7363900772616409091-5K3R?utm_source=social_share_send&utm_medium=member_desktop_web&rcm=ACoAAD7ehJwB0_FcvytmTsHRpNnDo79WRouD4L8)
+
 
 ---
 ## ⚡ How to Run
