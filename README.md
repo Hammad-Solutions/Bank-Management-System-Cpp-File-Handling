@@ -33,7 +33,7 @@ It is a **beginner-friendly project**, perfect for **first semester students** w
 
 
 ### Create Account  
-![Create Account](assets/screenshots/createAcc.png)
+![Create Account](assets/screenshots/CreateAcc.png)
 
 ### Login Menu  
 ![Main Menu](assets/screenshots/login.png)
@@ -50,6 +50,19 @@ It is a **beginner-friendly project**, perfect for **first semester students** w
 [▶ Watch Demo](assets/videos/demo.mp4)  
 
 ---
+## ⚡ How to Run
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/Hammad-Solutions/Bank-Management-System-Cpp-File-Handling.git
+
+
+## 📜 License
+This project is open-source and available under the MIT License.
+
+![C++](https://img.shields.io/badge/Language-C++-blue.svg)
+![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20Linux-lightgrey.svg)
+![Status](https://img.shields.io/badge/Status-Active-brightgreen.svg)
 
 ## ✨ Author
-👨‍💻 Code written by **Hammad Solution**  
+👨‍💻 Code written by **Hammad Solution** 
+
